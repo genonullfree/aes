@@ -285,13 +285,11 @@ pub fn inv_cipher(state: &state_t, roundkey: &roundkey_t) -> state_t {
 pub fn aes_ecb_encrypt(ctx: &aes_ctx, data: &[u8; 16]) -> [u8; 16] {
     let mut ns: state_t = [[0; NB]; NB];
 
-    println!("{:02x?}", data);
     for i in 0..16 {
         ns[i / 4][i % 4] = data[i];
     }
-    println!("{:02x?}", ns);
+
     ns = cipher(&ns, &ctx.roundkey);
-    println!("{:02x?}", ns);
 
     let mut out: [u8; 16] = [0; 16];
 
