@@ -282,20 +282,38 @@ pub fn inv_cipher(state: &state_t, roundkey: &roundkey_t) -> state_t {
     ns
 }
 
-pub fn aes_ecb_encrypt(ctx: &aes_ctx, data: &[u8; 16]) -> [u8; 16] {
+fn array_to_state(data: &[u8; 16]) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
     for i in 0..16 {
         ns[i / 4][i % 4] = data[i];
     }
 
-    ns = cipher(&ns, &ctx.roundkey);
+    ns
+}
 
+fn state_to_array(state: &state_t) -> [u8; 16] {
     let mut out: [u8; 16] = [0; 16];
 
     for i in 0..16 {
-        out[i] = ns[i / 4][i % 4];
+        out[i] = state[i / 4][i % 4];
     }
 
     out
+}
+
+pub fn aes_ecb_encrypt(ctx: &aes_ctx, data: &[u8; 16]) -> [u8; 16] {
+    let mut ns: state_t = array_to_state(&data);
+
+    ns = cipher(&ns, &ctx.roundkey);
+
+    state_to_array(&ns)
+}
+
+pub fn aes_ecb_decrypt(ctx: &aes_ctx, data: &[u8; 16]) -> [u8; 16] {
+    let mut ns: state_t = array_to_state(&data);
+
+    ns = inv_cipher(&ns, &ctx.roundkey);
+
+    state_to_array(&ns)
 }
