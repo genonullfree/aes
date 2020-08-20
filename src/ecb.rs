@@ -185,15 +185,15 @@ pub fn inv_shift_rows(state: &state_t) -> state_t {
 }
 
 pub fn xtime(a: u8) -> u8 {
-    (a << 1) ^ (((a >> 1) & 1) * 0x1b)
+    (a << 1) ^ (((a >> 7) & 1) * 0x1b)
 }
 
 pub fn mult(a: &u8, b: u8) -> u8 {
     ((b & 1) * a)
         ^ ((b >> 1 & 1) * xtime(*a))
-        ^ ((b >> 1 & 1) * xtime(xtime(*a)))
-        ^ ((b >> 1 & 1) * xtime(xtime(xtime(*a))))
-        ^ ((b >> 1 & 1) * xtime(xtime(xtime(xtime(*a)))))
+        ^ ((b >> 2 & 1) * xtime(xtime(*a)))
+        ^ ((b >> 3 & 1) * xtime(xtime(xtime(*a))))
+        ^ ((b >> 4 & 1) * xtime(xtime(xtime(xtime(*a)))))
 }
 
 pub fn mix_columns(state: &state_t) -> state_t {
