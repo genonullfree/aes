@@ -132,6 +132,7 @@ pub fn key_expansion(a: &key_t) -> roundkey_t {
     round
 }
 
+// Initializes the AES contex struct with the expanded key
 pub fn aes_init_ctx(a: key_t) -> aes_ctx {
     let ctx: aes_ctx = aes_ctx {
         roundkey: key_expansion(&a),
@@ -140,6 +141,7 @@ pub fn aes_init_ctx(a: key_t) -> aes_ctx {
     ctx
 }
 
+// XORs the roundkey with the current state of the cipher
 fn add_round_key(round: u8, state: &state_t, roundkey: &roundkey_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
@@ -153,6 +155,7 @@ fn add_round_key(round: u8, state: &state_t, roundkey: &roundkey_t) -> state_t {
     ns
 }
 
+// Substitute each byte with the corresponding value in the SBOX array
 fn sub_bytes(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
@@ -165,6 +168,7 @@ fn sub_bytes(state: &state_t) -> state_t {
     ns
 }
 
+// Substitues each byte with the corresponding value in the RSBOX array
 fn inv_sub_bytes(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
@@ -177,6 +181,7 @@ fn inv_sub_bytes(state: &state_t) -> state_t {
     ns
 }
 
+// Rotate each row by its row number that many times left, wrapping
 pub fn shift_rows(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
@@ -189,6 +194,7 @@ pub fn shift_rows(state: &state_t) -> state_t {
     ns
 }
 
+// Rotate each row by its row number that many times right, wrapping
 fn inv_shift_rows(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
@@ -201,10 +207,12 @@ fn inv_shift_rows(state: &state_t) -> state_t {
     ns
 }
 
+// Maths
 fn xtime(a: u8) -> u8 {
     (a << 1) ^ (((a >> 7) & 1) * 0x1b)
 }
 
+// Also technically Maths, which is recommended
 fn mult(a: &u8, b: u8) -> u8 {
     ((b & 1) * a)
         ^ ((b >> 1 & 1) * xtime(*a))
@@ -213,6 +221,7 @@ fn mult(a: &u8, b: u8) -> u8 {
         ^ ((b >> 4 & 1) * xtime(xtime(xtime(xtime(*a)))))
 }
 
+// Mixes the columns of the state array
 fn mix_columns(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
     #[allow(unused_assignments)]
@@ -233,6 +242,7 @@ fn mix_columns(state: &state_t) -> state_t {
     ns
 }
 
+// I can write this code but that doesnt mean I understand it. I can see the pattern though.
 fn inv_mix_columns(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
