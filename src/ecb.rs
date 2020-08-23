@@ -1,16 +1,33 @@
-const NK: usize = 4; // The number of 32 bit words in a key.
-const NR: usize = 10; // The number of rounds in AES Cipher. 10 for AES-128.
-pub const NB: usize = 4; // The number of columns in an AES state.
-pub const AES128KEYEXPSIZE: usize = 176;
-pub const AES128KEYLEN: usize = 16;
 
-#[allow(non_camel_case_types)]
-pub type state_t = [[u8; 4]; 4];
-#[allow(non_camel_case_types)]
-pub type key_t = [u8; AES128KEYLEN];
-#[allow(non_camel_case_types)]
-pub type roundkey_t = [u8; AES128KEYEXPSIZE];
+// The number of 32 bit words in a key.
+const NK: usize = 4;
 
+// The number of rounds in AES Cipher. AES-128 uses 10.
+const NR: usize = 10;
+
+// The number of columns in an AES state.
+pub const NB: usize = 4;
+
+// The size of the key after expansion, in bytes
+pub const AES128_EXP_LEN: usize = 176;
+
+// The size of the AES-128 key, in bytes
+pub const AES128_LEN: usize = 16;
+
+// This sets up an NBxNB array typedef for the state array for the cipher alogrithm
+#[allow(non_camel_case_types)]
+pub type state_t = [[u8; NB]; NB];
+
+// This is a typedef for a key
+#[allow(non_camel_case_types)]
+pub type key_t = [u8; AES128_LEN];
+
+// This is a typedef for an expanded key
+#[allow(non_camel_case_types)]
+pub type roundkey_t = [u8; AES128_EXP_LEN];
+
+// This is a struct for the AES context. This could be expanded later to support other cipher modes,
+//  but for ECB this is all that is needed.
 #[allow(non_camel_case_types)]
 pub struct aes_ctx {
     pub roundkey: roundkey_t,
@@ -67,8 +84,8 @@ fn get_sbox_invert(a: &u8) -> u8 {
 }
 
 pub fn key_expansion(a: &key_t) -> roundkey_t {
-    let mut round: roundkey_t = [0; AES128KEYEXPSIZE];
-    let mut temp: [u8; 4] = [0; 4];
+    let mut round: roundkey_t = [0; AES128_EXP_LEN];
+    let mut temp: [u8; NB] = [0; NB];
 
     // first round
     for i in 0..NK {
@@ -123,7 +140,7 @@ pub fn aes_init_ctx(a: key_t) -> aes_ctx {
     ctx
 }
 
-pub fn add_round_key(round: u8, state: &state_t, roundkey: &roundkey_t) -> state_t {
+fn add_round_key(round: u8, state: &state_t, roundkey: &roundkey_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
     for i in 0..NB {
@@ -136,7 +153,7 @@ pub fn add_round_key(round: u8, state: &state_t, roundkey: &roundkey_t) -> state
     ns
 }
 
-pub fn sub_bytes(state: &state_t) -> state_t {
+fn sub_bytes(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
     for i in 0..NB {
@@ -148,7 +165,7 @@ pub fn sub_bytes(state: &state_t) -> state_t {
     ns
 }
 
-pub fn inv_sub_bytes(state: &state_t) -> state_t {
+fn inv_sub_bytes(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
     for i in 0..NB {
@@ -172,7 +189,7 @@ pub fn shift_rows(state: &state_t) -> state_t {
     ns
 }
 
-pub fn inv_shift_rows(state: &state_t) -> state_t {
+fn inv_shift_rows(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
     for i in 0..NB {
@@ -184,11 +201,11 @@ pub fn inv_shift_rows(state: &state_t) -> state_t {
     ns
 }
 
-pub fn xtime(a: u8) -> u8 {
+fn xtime(a: u8) -> u8 {
     (a << 1) ^ (((a >> 7) & 1) * 0x1b)
 }
 
-pub fn mult(a: &u8, b: u8) -> u8 {
+fn mult(a: &u8, b: u8) -> u8 {
     ((b & 1) * a)
         ^ ((b >> 1 & 1) * xtime(*a))
         ^ ((b >> 2 & 1) * xtime(xtime(*a)))
@@ -196,7 +213,7 @@ pub fn mult(a: &u8, b: u8) -> u8 {
         ^ ((b >> 4 & 1) * xtime(xtime(xtime(xtime(*a)))))
 }
 
-pub fn mix_columns(state: &state_t) -> state_t {
+fn mix_columns(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
     #[allow(unused_assignments)]
     let mut t0 = 0;
@@ -216,7 +233,7 @@ pub fn mix_columns(state: &state_t) -> state_t {
     ns
 }
 
-pub fn inv_mix_columns(state: &state_t) -> state_t {
+fn inv_mix_columns(state: &state_t) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
     for i in 0..NB {
@@ -234,7 +251,7 @@ pub fn inv_mix_columns(state: &state_t) -> state_t {
     ns
 }
 
-pub fn cipher(state: &state_t, roundkey: &roundkey_t) -> state_t {
+fn cipher(state: &state_t, roundkey: &roundkey_t) -> state_t {
     let mut round: u8 = 0;
 
     let mut ns = add_round_key(round, state, roundkey);
@@ -259,7 +276,7 @@ pub fn cipher(state: &state_t, roundkey: &roundkey_t) -> state_t {
     ns
 }
 
-pub fn inv_cipher(state: &state_t, roundkey: &roundkey_t) -> state_t {
+fn inv_cipher(state: &state_t, roundkey: &roundkey_t) -> state_t {
     let mut round: u8 = 10;
 
     let mut ns = add_round_key(round, state, roundkey);
@@ -286,7 +303,7 @@ fn array_to_state(data: &[u8; 16]) -> state_t {
     let mut ns: state_t = [[0; NB]; NB];
 
     for i in 0..16 {
-        ns[i / 4][i % 4] = data[i];
+        ns[i / NB][i % NB] = data[i];
     }
 
     ns
@@ -296,7 +313,7 @@ fn state_to_array(state: &state_t) -> [u8; 16] {
     let mut out: [u8; 16] = [0; 16];
 
     for i in 0..16 {
-        out[i] = state[i / 4][i % 4];
+        out[i] = state[i / NB][i % NB];
     }
 
     out
