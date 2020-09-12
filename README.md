@@ -8,10 +8,10 @@ The library passes the encryption and decryption test vectors for AES-128-ECB! T
 
 Add the following to your Cargo.toml under `[dependencies]`:
 ```
-aes = { git = "https://github.com/genonullfree/aes.git" }
+aes128ecb = { git = "https://github.com/genonullfree/aes.git" }
 ```
 
 Add the following to your .rs file:
 ```
-use ::aes::*;
+use aes128ecb::ecb;
 ```
